@@ -51,6 +51,16 @@ type File struct {
 	Type string `js:"type"`
 }
 
+// FormData wraps the FormData object
+type FormData struct {
+	*js.Object
+}
+
+// Append appends parameters and values to the FormData object
+func (f *FormData) Append(param string, value interface{}) {
+	f.Call("append", param, value)
+}
+
 // RemoveFiles removes files already loaded
 func (d *Dropzone) RemoveFiles() {
 	d.Call("removeAllFiles")
@@ -65,6 +75,7 @@ type Props struct {
 	AcceptedFiles string
 	OnSuccess     func(file *File, response string)
 	OnError       func(file *File, status int, errorMessage string)
+	OnSend        func(file *File, formData *FormData)
 }
 
 // NewDropzone creates a new dropzone object
@@ -87,6 +98,11 @@ func NewDropzone(elem dom.Element, props Props) *Dropzone {
 	if props.OnSuccess != nil {
 		d.Call("on", "success", func(file *File, resp string) {
 			props.OnSuccess(file, resp)
+		})
+	}
+	if props.OnSend != nil {
+		d.Call("on", "sending", func(file *File, xhr *js.Object, formData *FormData) {
+			props.OnSend(file, formData)
 		})
 	}
 	return &Dropzone{Object: d}

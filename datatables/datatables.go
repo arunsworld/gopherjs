@@ -91,6 +91,23 @@ func NewDatatable(elem dom.Element, options Options, columns []Column, data *js.
 	return result
 }
 
+// NewDatatableWithArray creates a new datatable with a flat 2D array
+func NewDatatableWithArray(elem dom.Element, options Options, columns []Column, data *js.Object) Datatable {
+	result := Datatable{}
+	result.dt = js.Global.Call("jQuery", elem)
+	opts := js.Global.Get("Object").New(js.M{"columns": columnOptionsJustTitle(columns), "data": data,
+		"columnDefs": columnDefnOptions(columns)})
+	updateOptions(opts, options)
+	result.dt.Call("dataTable", opts)
+	return result
+}
+
+// Destroy removes the existing table in prep for a refresh
+func (dt *Datatable) Destroy() {
+	api := dt.dt.Call("api")
+	api.Call("destroy")
+}
+
 // Update updates the datatable with the passed in data
 func (dt *Datatable) Update(data *js.Object) {
 	api := dt.dt.Call("api")
@@ -125,6 +142,14 @@ func columnOptions(columns []Column) *js.Object {
 	result := js.S{}
 	for _, c := range columns {
 		result = append(result, js.M{"data": c.ID, "name": c.ID, "title": c.Title})
+	}
+	return js.Global.Get("Object").New(result)
+}
+
+func columnOptionsJustTitle(columns []Column) *js.Object {
+	result := js.S{}
+	for _, c := range columns {
+		result = append(result, js.M{"title": c.Title})
 	}
 	return js.Global.Get("Object").New(result)
 }
